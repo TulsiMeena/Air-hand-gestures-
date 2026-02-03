@@ -71,6 +71,14 @@
       </div>
     <div class="controls">
       <div class="gesture-display">
+        <div class="theme-controls" style="margin-bottom: 10px;">
+          <select id="themeSelect" class="quality-selector" style="width: auto;">
+            <option value="theme-space">🌌 Space Theme</option>
+            <option value="theme-nature">🌿 Nature Theme</option>
+            <option value="theme-sunset">🌅 Sunset Theme</option>
+            <option value="theme-neon">🎆 Neon Theme</option>
+          </select>
+        </div>
         <h3>🤲 Current Gesture:</h3>
         <div id="gestureText">None</div>
         <div class="game-stats">
@@ -94,6 +102,10 @@
         <button id="performanceBtn" class="performance-btn">⚡ High Performance</button>
         <button id="soundBtn" class="sound-btn">🔊 Sound On</button>
         <button id="voiceBtn" class="voice-btn">🎤 AI Voice On</button>
+      </div>
+      <div class="magic-controls">
+        <button id="recordGestureBtn" class="auth-btn" style="background: rgba(138, 43, 226, 0.3); border-color: #8a2be2;">🧠 Record Magic Gesture</button>
+        <div id="magicStatus" style="margin-top: 5px; font-size: 0.9rem; color: #aaa;">No custom gesture recorded</div>
       </div>
       <div class="actions">
         <div class="action-item" id="action1">👆 Point Up</div>

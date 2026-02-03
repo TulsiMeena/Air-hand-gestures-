@@ -746,3 +746,17 @@
       transform: scale(1.1);
       box-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
     }
+
+    /* Background Themes */
+    body.theme-space {
+      background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+    }
+    body.theme-nature {
+      background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+    }
+    body.theme-sunset {
+      background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+    }
+    body.theme-neon {
+      background: linear-gradient(135deg, #ff00cc 0%, #333399 100%);
+    }

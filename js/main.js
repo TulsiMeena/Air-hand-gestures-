@@ -14,3 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 5000);
   }
 });
+
+  // Theme Switching Logic
+  const themeSelect = document.getElementById('themeSelect');
+  if (themeSelect) {
+    themeSelect.addEventListener('change', (e) => {
+      document.body.className = e.target.value;
+    });
+  }

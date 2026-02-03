@@ -80,6 +80,11 @@ class AdvancedGestureGame {
     this.gestureConfidence = {};
     this.gestureThreshold = 3;
 
+    // Custom Gesture Memory ("Smriti")
+    this.magicGesture = null;
+    this.isRecordingGesture = false;
+    this.magicCooldown = 0;
+
     this.initializeGame();
   }
 
@@ -105,6 +110,14 @@ class AdvancedGestureGame {
     if (playAgainBtn) {
       playAgainBtn.addEventListener('click', () => {
         this.restartGame();
+      });
+    }
+
+    // Setup Magic Gesture button
+    const recordGestureBtn = document.getElementById('recordGestureBtn');
+    if (recordGestureBtn) {
+      recordGestureBtn.addEventListener('click', () => {
+        this.startMagicRecording();
       });
     }
 
@@ -387,13 +400,22 @@ class AdvancedGestureGame {
       }
 
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        results.multiHandLandmarks.forEach((landmarks, index) => {
-          this.drawOptimizedHand(landmarks, index);
-          this.checkMultiFingerCollision(landmarks);
-          this.drawGestureTrail(landmarks[8], index);
+        const landmarks = results.multiHandLandmarks[0];
+
+        // Handle Magic Gesture Recording
+        if (this.isRecordingGesture) {
+          this.captureMagicGesture(landmarks);
+        } else if (this.magicGesture && Date.now() > this.magicCooldown) {
+          this.detectMagicGesture(landmarks);
+        }
+
+        results.multiHandLandmarks.forEach((lms, index) => {
+          this.drawOptimizedHand(lms, index);
+          this.checkMultiFingerCollision(lms);
+          this.drawGestureTrail(lms[8], index);
         });
 
-        const gesture = this.recognizeAdvancedGesture(results.multiHandLandmarks[0]);
+        const gesture = this.recognizeAdvancedGesture(landmarks);
         this.updateGesture(gesture);
       } else {
         this.updateGesture('None');
@@ -471,6 +493,77 @@ class AdvancedGestureGame {
   isRockSign(landmarks, fingersUp) {
     return fingersUp[1] === 1 && fingersUp[4] === 1 &&
            fingersUp[2] === 0 && fingersUp[3] === 0;
+  }
+
+  startMagicRecording() {
+    this.speakText("Get ready! Recording gesture in 3 seconds.");
+    document.getElementById('magicStatus').textContent = "⏳ Get Ready...";
+
+    setTimeout(() => {
+      this.isRecordingGesture = true;
+      document.getElementById('magicStatus').textContent = "📸 HOLD POSE!";
+    }, 3000);
+  }
+
+  captureMagicGesture(landmarks) {
+    // Normalize landmarks (relative to wrist)
+    const wrist = landmarks[0];
+    const normalized = landmarks.map(p => ({
+      x: p.x - wrist.x,
+      y: p.y - wrist.y,
+      z: p.z - wrist.z
+    }));
+
+    this.magicGesture = normalized;
+    this.isRecordingGesture = false;
+
+    this.speakText("Gesture recorded! Use it to clear the screen.");
+    document.getElementById('magicStatus').textContent = "✅ Gesture Active! Use it!";
+    document.getElementById('recordGestureBtn').style.background = 'rgba(0, 255, 136, 0.3)';
+    document.getElementById('recordGestureBtn').style.borderColor = '#00ff88';
+  }
+
+  detectMagicGesture(landmarks) {
+    if (!this.magicGesture) return;
+
+    const wrist = landmarks[0];
+    let totalError = 0;
+
+    for (let i = 0; i < landmarks.length; i++) {
+      const p = landmarks[i];
+      const target = this.magicGesture[i];
+
+      const dx = (p.x - wrist.x) - target.x;
+      const dy = (p.y - wrist.y) - target.y;
+      const dz = (p.z - wrist.z) - target.z;
+
+      totalError += Math.sqrt(dx*dx + dy*dy + dz*dz);
+    }
+
+    const avgError = totalError / landmarks.length;
+
+    // Threshold for detection (tune as needed)
+    if (avgError < 0.08) {
+      this.triggerMagicEffect();
+    }
+  }
+
+  triggerMagicEffect() {
+    this.magicCooldown = Date.now() + 2000; // 2s cooldown
+    this.sounds.specialPop();
+    this.speakText("Magic Gesture Detected! Screen Clear!");
+
+    // Pop all bubbles
+    this.bubbles.forEach(bubble => {
+      this.createAdvancedPopEffect(bubble.x, bubble.y, 'rainbow');
+      this.score += 50;
+    });
+    this.bubbles = [];
+    this.scoreElement.textContent = this.score;
+
+    // Visual flash
+    this.canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    this.canvasCtx.fillRect(0, 0, this.canvasElement.width, this.canvasElement.height);
   }
 
   updateGesture(gesture) {
@@ -612,28 +705,47 @@ class AdvancedGestureGame {
     if (rand < 0.10) return 'diamond';
     if (rand < 0.20) return 'golden';
     if (rand < 0.30) return 'rainbow';
+    if (rand < 0.45) return 'food';
+    if (rand < 0.60) return 'animal';
     return 'normal';
   }
 
   configureBubbleType(bubble) {
+    bubble.icon = '🎈'; // Default
+
     switch (bubble.specialType) {
       case 'golden':
         bubble.color = 'hsl(45, 100%, 70%)';
         bubble.radius *= 1.5;
+        bubble.icon = ['🌟', '👑', '🏆', '📀'][Math.floor(Math.random() * 4)];
         break;
       case 'diamond':
         bubble.color = 'hsl(200, 100%, 90%)';
         bubble.radius *= 0.8;
         bubble.speed *= 0.7;
+        bubble.icon = ['💎', '💍', '💠'][Math.floor(Math.random() * 3)];
         break;
       case 'rainbow':
         bubble.color = `hsl(${Date.now() * 0.1 % 360}, 100%, 70%)`;
         bubble.isRainbow = true;
+        bubble.icon = ['🌈', '🎨', '🍭'][Math.floor(Math.random() * 3)];
         break;
       case 'bomb':
         bubble.color = 'hsl(0, 0%, 20%)';
         bubble.radius *= 1.2;
         bubble.wobble *= 2;
+        bubble.icon = ['💣', '🧨', '💥'][Math.floor(Math.random() * 3)];
+        break;
+      case 'food':
+        bubble.icon = ['🍎', '🍌', '🍕', '🍩', '🍓', '🍔', '🍇'][Math.floor(Math.random() * 7)];
+        break;
+      case 'animal':
+        bubble.icon = ['🦋', '🐞', '🐦', '🦊', '🐼', '🦄'][Math.floor(Math.random() * 6)];
+        bubble.speed *= 1.2; // Animals move faster
+        break;
+      case 'normal':
+      default:
+        bubble.icon = ['🎈', '🫧', '🔮', '🔵', '🟣', '🥎'][Math.floor(Math.random() * 6)];
         break;
     }
   }
@@ -654,30 +766,36 @@ class AdvancedGestureGame {
       this.canvasCtx.rotate(bubble.rotation);
       this.canvasCtx.globalAlpha = bubble.opacity;
 
-      const gradient = this.canvasCtx.createRadialGradient(
-        -bubble.radius/3, -bubble.radius/3, 0,
-        0, 0, bubble.radius
-      );
+      // Draw bubble background (glow)
+      const gradient = this.canvasCtx.createRadialGradient(0, 0, 0, 0, 0, bubble.radius);
 
-      if (bubble.specialType === 'golden') {
-        gradient.addColorStop(0, 'rgba(255,255,255,0.9)');
-        gradient.addColorStop(0.3, 'rgba(255,215,0,0.8)');
-        gradient.addColorStop(1, 'rgba(255,140,0,0.6)');
+      if (bubble.specialType === 'bomb') {
+        gradient.addColorStop(0, 'rgba(255, 50, 50, 0.8)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      } else if (bubble.specialType === 'golden') {
+        gradient.addColorStop(0, 'rgba(255, 215, 0, 0.6)');
+        gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
       } else {
-        gradient.addColorStop(0, 'rgba(255,255,255,0.8)');
-        gradient.addColorStop(0.3, bubble.color);
-        gradient.addColorStop(1, 'rgba(0,0,0,0.3)');
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
       }
 
       this.canvasCtx.fillStyle = gradient;
       this.canvasCtx.beginPath();
-      this.canvasCtx.arc(0, 0, bubble.radius, 0, 2 * Math.PI);
+      this.canvasCtx.arc(0, 0, bubble.radius * 1.2, 0, 2 * Math.PI);
       this.canvasCtx.fill();
 
-      this.canvasCtx.fillStyle = 'rgba(255,255,255,0.7)';
-      this.canvasCtx.beginPath();
-      this.canvasCtx.arc(-bubble.radius/3, -bubble.radius/3, bubble.radius/4, 0, 2 * Math.PI);
-      this.canvasCtx.fill();
+      // Draw the "Picture" (Emoji)
+      this.canvasCtx.font = `${bubble.radius * 1.5}px Arial`;
+      this.canvasCtx.textAlign = 'center';
+      this.canvasCtx.textBaseline = 'middle';
+      this.canvasCtx.fillStyle = 'white';
+
+      // Shadow for better visibility
+      this.canvasCtx.shadowColor = 'rgba(0,0,0,0.5)';
+      this.canvasCtx.shadowBlur = 5;
+
+      this.canvasCtx.fillText(bubble.icon, 0, 0);
 
       this.canvasCtx.restore();
     });
