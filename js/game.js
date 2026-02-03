@@ -42,11 +42,12 @@ class AdvancedGestureGame {
     this.audioContext = null;
     this.sounds = {};
 
-    // Speech synthesis
-    this.speechEnabled = true;
-    this.speechSynthesis = null;
-    this.voices = [];
-    this.selectedVoice = null;
+    // AI Manager
+    this.aiManager = new AIManager();
+
+    // Hand Customization
+    this.handStyle = 'standard'; // standard, cyber, skeleton, custom
+    this.customHandImage = null;
 
     // Advanced bubble game properties
     this.bubbles = [];
@@ -91,10 +92,17 @@ class AdvancedGestureGame {
   initializeGame() {
     this.gameCameraQuality = '1080p'; // Default game camera quality
     this.setupEventListeners();
+    this.setupSettingsControls(); // New settings
     this.startGameLoop();
     this.createBackgroundParticles();
     this.startBackgroundAnimation();
     this.initializeAudio();
+
+    // Initial AI Welcome
+    setTimeout(() => {
+      this.aiManager.speak("System initialized. Welcome to the Advanced Gesture Interface.", true, 'welcome');
+    }, 1000);
+
     this.status.textContent = '🎮 Welcome! Game is ready to play!';
     this.status.style.color = '#00ff88';
 
@@ -125,6 +133,97 @@ class AdvancedGestureGame {
     setTimeout(() => {
       this.startCamera();
     }, 1000);
+  }
+
+  setupSettingsControls() {
+    // Settings Modal Toggle
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+
+    if (settingsBtn && settingsModal) {
+      settingsBtn.addEventListener('click', () => {
+        settingsModal.style.display = 'flex';
+        this.populateVoiceSelect();
+      });
+    }
+
+    if (closeSettingsBtn) {
+      closeSettingsBtn.addEventListener('click', () => {
+        settingsModal.style.display = 'none';
+        this.aiManager.speak("Settings saved.", false);
+      });
+    }
+
+    // Voice Selection
+    const voiceSelect = document.getElementById('voiceSelect');
+    if (voiceSelect) {
+      voiceSelect.addEventListener('change', (e) => {
+        this.aiManager.setVoice(e.target.value);
+      });
+    }
+
+    // Personality Selection
+    const personalitySelect = document.getElementById('personalitySelect');
+    if (personalitySelect) {
+      personalitySelect.addEventListener('change', (e) => {
+        this.aiManager.setPersonality(e.target.value);
+      });
+    }
+
+    // Hand Style Selection
+    const handStyleSelect = document.getElementById('handStyleSelect');
+    const customHandUpload = document.getElementById('customHandUpload');
+    if (handStyleSelect) {
+      handStyleSelect.addEventListener('change', (e) => {
+        this.handStyle = e.target.value;
+        if (this.handStyle === 'custom') {
+          customHandUpload.style.display = 'block';
+        } else {
+          customHandUpload.style.display = 'none';
+        }
+      });
+    }
+
+    // Custom Image Upload
+    const handImageInput = document.getElementById('handImageInput');
+    if (handImageInput) {
+      handImageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              this.customHandImage = img;
+              this.aiManager.speak("Custom hand visual loaded.");
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+  }
+
+  populateVoiceSelect() {
+    const voiceSelect = document.getElementById('voiceSelect');
+    if (!voiceSelect) return;
+
+    // Refresh voices
+    this.aiManager.loadVoices();
+    const voices = this.aiManager.getVoices();
+
+    voiceSelect.innerHTML = '';
+    voices.forEach(voice => {
+      const option = document.createElement('option');
+      option.value = voice.name;
+      option.textContent = `${voice.name} (${voice.lang})`;
+      if (this.aiManager.selectedVoice && voice.name === this.aiManager.selectedVoice.name) {
+        option.selected = true;
+      }
+      voiceSelect.appendChild(option);
+    });
   }
 
   setupGameCameraControls() {
@@ -180,41 +279,14 @@ class AdvancedGestureGame {
   }
 
   initializeSpeech() {
-    if ('speechSynthesis' in window) {
-      this.speechEnabled = true;
-      this.speechSynthesis = window.speechSynthesis;
-      this.getVoices();
-
-      if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = () => this.getVoices();
-      }
-    } else {
-      this.speechEnabled = false;
-    }
-  }
-
-  getVoices() {
-    this.voices = this.speechSynthesis.getVoices();
-    this.selectedVoice = this.voices.find(voice =>
-      voice.lang.includes('hi') || voice.lang.includes('Hindi')
-    ) || this.voices.find(voice => voice.lang.includes('en')) || this.voices[0];
+    // Replaced by AIManager
+    this.aiManager.loadVoices();
   }
 
   speakText(text) {
-    if (!this.speechEnabled || !this.soundEnabled) return;
-
-    this.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-
-    if (this.selectedVoice) {
-      utterance.voice = this.selectedVoice;
-    }
-
-    utterance.rate = 1.1;
-    utterance.pitch = 1.2;
-    utterance.volume = 0.8;
-
-    this.speechSynthesis.speak(utterance);
+    // Deprecated wrapper, routing to AIManager
+    if (!this.soundEnabled) return;
+    this.aiManager.speak(text);
   }
 
   createSoundEffects() {
@@ -410,7 +482,7 @@ class AdvancedGestureGame {
         }
 
         results.multiHandLandmarks.forEach((lms, index) => {
-          this.drawOptimizedHand(lms, index);
+          this.drawCustomHand(lms, index);
           this.checkMultiFingerCollision(lms);
           this.drawGestureTrail(lms[8], index);
         });
@@ -496,7 +568,7 @@ class AdvancedGestureGame {
   }
 
   startMagicRecording() {
-    this.speakText("Get ready! Recording gesture in 3 seconds.");
+    this.aiManager.speak("Get ready! Recording gesture in 3 seconds.", true);
     document.getElementById('magicStatus').textContent = "⏳ Get Ready...";
 
     setTimeout(() => {
@@ -517,7 +589,7 @@ class AdvancedGestureGame {
     this.magicGesture = normalized;
     this.isRecordingGesture = false;
 
-    this.speakText("Gesture recorded! Use it to clear the screen.");
+    this.aiManager.speak("Gesture recorded! Use it to clear the screen.", true);
     document.getElementById('magicStatus').textContent = "✅ Gesture Active! Use it!";
     document.getElementById('recordGestureBtn').style.background = 'rgba(0, 255, 136, 0.3)';
     document.getElementById('recordGestureBtn').style.borderColor = '#00ff88';
@@ -551,7 +623,7 @@ class AdvancedGestureGame {
   triggerMagicEffect() {
     this.magicCooldown = Date.now() + 2000; // 2s cooldown
     this.sounds.specialPop();
-    this.speakText("Magic Gesture Detected! Screen Clear!");
+    this.aiManager.speak("Magic Gesture Detected! Screen Clear!", true);
 
     // Pop all bubbles
     this.bubbles.forEach(bubble => {
@@ -634,9 +706,9 @@ class AdvancedGestureGame {
         if (this.combo > 3) {
           this.sounds.combo();
           if (this.combo === 5) {
-            this.speakText("Excellent combo Sir! You are amazing!");
+            this.aiManager.speak("", true, 'combo');
           } else if (this.combo === 10) {
-            this.speakText("Outstanding performance Sir! Master level achieved!");
+            this.aiManager.speak("Outstanding performance Sir! Master level achieved!", true);
           }
         }
       } else {
@@ -827,7 +899,7 @@ class AdvancedGestureGame {
           this.score = Math.max(0, this.score - 50);
           this.combo = 0;
           this.sounds.pop(150);
-          this.speakText("Bomb! Oh no!");
+          this.aiManager.speak("", true, 'bomb');
           this.createAdvancedPopEffect(bubble.x, bubble.y, 'bomb');
         } else {
           let points = bubble.specialType === 'golden' ? 75 : 25; // Increased points
@@ -836,21 +908,17 @@ class AdvancedGestureGame {
 
           if (bubble.specialType === 'golden') {
             this.sounds.specialPop();
-            this.speakText("Golden bubble! Fantastic Sir!");
+            this.aiManager.speak("Golden bubble! Fantastic Sir!");
           } else if (bubble.specialType === 'diamond') {
             this.sounds.specialPop();
-            this.speakText("Diamond hit! Incredible skill Sir!");
+            this.aiManager.speak("Diamond hit! Incredible skill Sir!");
           } else if (bubble.specialType === 'rainbow') {
             this.sounds.specialPop();
-            this.speakText("Rainbow power! Amazing Sir!");
+            this.aiManager.speak("Rainbow power! Amazing Sir!");
           } else {
             this.sounds.pop(600 + Math.random() * 400);
-            const encouragements = [
-              "Excellent Sir!", "Perfect aim!", "Outstanding!",
-              "Brilliant shot!", "Superb skills!", "Magnificent!"
-            ];
-            if (Math.random() < 0.3) {
-              this.speakText(encouragements[Math.floor(Math.random() * encouragements.length)]);
+            if (Math.random() < 0.2) {
+              this.aiManager.speak("", false, 'encouragement');
             }
           }
           this.createAdvancedPopEffect(bubble.x, bubble.y, bubble.specialType);
@@ -962,27 +1030,95 @@ class AdvancedGestureGame {
     });
   }
 
-  drawOptimizedHand(landmarks, handIndex = 0) {
+  drawCustomHand(landmarks, handIndex = 0) {
     this.canvasCtx.save();
 
-    const handColors = ['#00FF88', '#FF8800'];
-    const pointColors = ['#FF4444', '#4444FF'];
+    // Base Colors
+    const primaryColor = handIndex === 0 ? '#00FF88' : '#FF8800';
+    const secondaryColor = handIndex === 0 ? '#FF4444' : '#4444FF';
 
-    this.canvasCtx.strokeStyle = handColors[handIndex % 2];
-    this.canvasCtx.lineWidth = 2;
+    if (this.handStyle === 'cyber') {
+      // Cyber / Neon Style
+      this.canvasCtx.shadowBlur = 15;
+      this.canvasCtx.shadowColor = primaryColor;
+      this.canvasCtx.strokeStyle = primaryColor;
+      this.canvasCtx.lineWidth = 4;
 
-    drawConnectors(this.canvasCtx, landmarks, HAND_CONNECTIONS, {
-      color: handColors[handIndex % 2],
-      lineWidth: 2
-    });
+      drawConnectors(this.canvasCtx, landmarks, HAND_CONNECTIONS, {
+        color: primaryColor,
+        lineWidth: 4
+      });
 
-    this.canvasCtx.fillStyle = pointColors[handIndex % 2];
+      this.canvasCtx.fillStyle = '#FFFFFF';
+      for (const landmark of landmarks) {
+        const x = landmark.x * this.canvasElement.width;
+        const y = landmark.y * this.canvasElement.height;
+        this.canvasCtx.beginPath();
+        this.canvasCtx.arc(x, y, 6, 0, 2 * Math.PI);
+        this.canvasCtx.fill();
+      }
 
-    drawLandmarks(this.canvasCtx, landmarks, {
-      color: pointColors[handIndex % 2],
-      lineWidth: 1,
-      radius: 3
-    });
+    } else if (this.handStyle === 'skeleton') {
+      // Realistic Bone Style
+      this.canvasCtx.strokeStyle = '#E0E0E0';
+      this.canvasCtx.lineWidth = 6;
+      this.canvasCtx.lineCap = 'round';
+
+      drawConnectors(this.canvasCtx, landmarks, HAND_CONNECTIONS, {
+        color: '#E0E0E0',
+        lineWidth: 6
+      });
+
+      // Draw joints
+      this.canvasCtx.fillStyle = '#FFFFFF';
+      for (const landmark of landmarks) {
+        const x = landmark.x * this.canvasElement.width;
+        const y = landmark.y * this.canvasElement.height;
+        this.canvasCtx.beginPath();
+        this.canvasCtx.arc(x, y, 8, 0, 2 * Math.PI);
+        this.canvasCtx.fill();
+
+        // Inner shadow for depth
+        this.canvasCtx.beginPath();
+        this.canvasCtx.arc(x, y, 4, 0, 2 * Math.PI);
+        this.canvasCtx.fillStyle = '#CCCCCC';
+        this.canvasCtx.fill();
+      }
+
+    } else if (this.handStyle === 'custom' && this.customHandImage) {
+      // Custom Image Style (Stickers on joints)
+      this.canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      this.canvasCtx.lineWidth = 2;
+
+      drawConnectors(this.canvasCtx, landmarks, HAND_CONNECTIONS, {
+        color: 'rgba(255, 255, 255, 0.5)',
+        lineWidth: 2
+      });
+
+      const size = 30; // Image size
+      for (const landmark of landmarks) {
+        const x = landmark.x * this.canvasElement.width;
+        const y = landmark.y * this.canvasElement.height;
+        this.canvasCtx.drawImage(this.customHandImage, x - size/2, y - size/2, size, size);
+      }
+
+    } else {
+      // Standard (Default)
+      this.canvasCtx.strokeStyle = primaryColor;
+      this.canvasCtx.lineWidth = 2;
+
+      drawConnectors(this.canvasCtx, landmarks, HAND_CONNECTIONS, {
+        color: primaryColor,
+        lineWidth: 2
+      });
+
+      this.canvasCtx.fillStyle = secondaryColor;
+      drawLandmarks(this.canvasCtx, landmarks, {
+        color: secondaryColor,
+        lineWidth: 1,
+        radius: 3
+      });
+    }
 
     this.canvasCtx.restore();
   }
@@ -1153,22 +1289,19 @@ class AdvancedGestureGame {
   }
 
   toggleVoice(voiceBtn) {
-    this.speechEnabled = !this.speechEnabled;
+    const newState = !this.aiManager.enabled;
+    this.aiManager.toggle(newState);
 
-    if (this.speechEnabled && 'speechSynthesis' in window) {
+    if (newState) {
       voiceBtn.textContent = '🎤 AI Voice On';
       voiceBtn.classList.remove('muted');
 
       setTimeout(() => {
-        this.speakText("Voice system activated Sir!");
+        this.aiManager.speak("Voice system activated Sir!");
       }, 500);
     } else {
       voiceBtn.textContent = '🔇 AI Voice Off';
       voiceBtn.classList.add('muted');
-
-      if (this.speechSynthesis) {
-        this.speechSynthesis.cancel();
-      }
     }
   }
 
@@ -1253,7 +1386,7 @@ class AdvancedGestureGame {
   gameOver() {
     this.gameActive = false;
     this.sounds.specialPop();
-    this.speakText("Game Over! Great job Sir!");
+    this.aiManager.speak("", true, 'gameover');
 
     document.getElementById('finalScore').textContent = this.score;
     document.getElementById('finalHighScore').textContent = this.highScore;
@@ -1274,7 +1407,7 @@ class AdvancedGestureGame {
     if (this.timerElement) this.timerElement.textContent = 60;
 
     document.getElementById('gameOverModal').style.display = 'none';
-    this.speakText("Game restarted! Good luck!");
+    this.aiManager.speak("Game restarted! Good luck!", true);
   }
 
   startBackgroundAnimation() {

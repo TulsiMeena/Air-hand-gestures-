@@ -71,13 +71,14 @@
       </div>
     <div class="controls">
       <div class="gesture-display">
-        <div class="theme-controls" style="margin-bottom: 10px;">
+        <div class="theme-controls" style="margin-bottom: 10px; display: flex; gap: 5px;">
           <select id="themeSelect" class="quality-selector" style="width: auto;">
             <option value="theme-space">🌌 Space Theme</option>
             <option value="theme-nature">🌿 Nature Theme</option>
             <option value="theme-sunset">🌅 Sunset Theme</option>
             <option value="theme-neon">🎆 Neon Theme</option>
           </select>
+          <button id="settingsBtn" class="quality-selector" style="width: auto; cursor: pointer;">⚙️ Settings</button>
         </div>
         <h3>🤲 Current Gesture:</h3>
         <div id="gestureText">None</div>
@@ -138,6 +139,47 @@
       <button id="playAgainBtn">Play Again</button>
     </div>
   </div>
+  <div id="settingsModal" class="modal" style="display: none;">
+    <div class="modal-content settings-content">
+      <h2>⚙️ Advanced Settings</h2>
+
+      <div class="setting-group">
+        <h3>🤖 AI Voice Assistant</h3>
+        <label for="voiceSelect">Voice Selection:</label>
+        <select id="voiceSelect" class="quality-selector" style="width: 100%; margin-bottom: 10px;">
+          <option value="">Loading voices...</option>
+        </select>
+
+        <label for="personalitySelect">AI Personality:</label>
+        <select id="personalitySelect" class="quality-selector" style="width: 100%;">
+          <option value="assistant">Jarvis (Assistant)</option>
+          <option value="gamer">Hyper Gamer</option>
+          <option value="minimal">Minimal / Tactical</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <h3>✋ Hand Visuals</h3>
+        <label for="handStyleSelect">Skeleton Style:</label>
+        <select id="handStyleSelect" class="quality-selector" style="width: 100%; margin-bottom: 10px;">
+          <option value="standard">Standard (Lines)</option>
+          <option value="cyber">Cyber Neon (Glow)</option>
+          <option value="skeleton">Realistic Bone</option>
+          <option value="custom">Custom Image (Stickers)</option>
+        </select>
+
+        <div id="customHandUpload" style="display: none;">
+          <label>Upload Joint Image:</label>
+          <input type="file" id="handImageInput" accept="image/*">
+          <p style="font-size: 0.8rem; color: #aaa;">Upload a small PNG/JPG to use as hand joints.</p>
+        </div>
+      </div>
+
+      <button id="closeSettingsBtn" class="auth-btn">Save & Close</button>
+    </div>
+  </div>
+
+  <script src="js/ai_manager.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/game.js"></script>
   <script src="js/main.js"></script>

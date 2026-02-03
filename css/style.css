@@ -760,3 +760,47 @@
     body.theme-neon {
       background: linear-gradient(135deg, #ff00cc 0%, #333399 100%);
     }
+
+    /* Settings Panel Styles */
+    .settings-content {
+      text-align: left;
+    }
+
+    .settings-content h2 {
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .setting-group {
+      margin-bottom: 25px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .setting-group h3 {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 5px;
+    }
+
+    #closeSettingsBtn {
+      width: 100%;
+      margin-top: 10px;
+      background: #00ff88;
+      color: #000;
+      border: none;
+    }
+
+    #closeSettingsBtn:hover {
+      background: #00cc6a;
+    }
+
+    #customHandUpload {
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 5px;
+    }
