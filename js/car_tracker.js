@@ -62,8 +62,9 @@ class CarSpeedDetector {
     const constraints = {
       video: {
         facingMode: 'environment', // Use back camera if available
-        width: { ideal: 1920 },
-        height: { ideal: 1080 }
+        width: { ideal: 640 }, // Lower resolution for better performance
+        height: { ideal: 480 },
+        frameRate: { ideal: 30 }
       }
     };
 
@@ -81,19 +82,24 @@ class CarSpeedDetector {
   async detectLoop() {
     if (!this.isActive) return;
 
+    // Performance optimization: Process frames efficiently
     // Detect objects
-    const predictions = await this.model.detect(this.videoElement);
+    try {
+      const predictions = await this.model.detect(this.videoElement);
 
-    // Filter for vehicles
-    const vehicles = predictions.filter(p =>
-      ['car', 'truck', 'bus', 'motorcycle'].includes(p.class)
-    );
+      // Filter for vehicles and humans
+      const detectedObjects = predictions.filter(p =>
+        ['person', 'car', 'truck', 'bus', 'motorcycle', 'bicycle'].includes(p.class)
+      );
 
-    this.updateTracking(vehicles);
-    this.drawResults(vehicles);
+      this.updateTracking(detectedObjects);
+      this.drawResults(detectedObjects);
 
-    this.carCountElement.textContent = vehicles.length;
-    this.maxSpeedElement.textContent = Math.round(this.maxSpeed);
+      this.carCountElement.textContent = detectedObjects.length;
+      this.maxSpeedElement.textContent = Math.round(this.maxSpeed);
+    } catch (e) {
+      console.warn("Detection skipped frame", e);
+    }
 
     requestAnimationFrame(() => this.detectLoop());
   }
