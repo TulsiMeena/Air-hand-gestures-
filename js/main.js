@@ -15,10 +15,48 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-  // Theme Switching Logic
-  const themeSelect = document.getElementById('themeSelect');
-  if (themeSelect) {
-    themeSelect.addEventListener('change', (e) => {
-      document.body.className = e.target.value;
+// Theme Switching Logic
+const themeSelect = document.getElementById('themeSelect');
+if (themeSelect) {
+  themeSelect.addEventListener('change', (e) => {
+    document.body.className = e.target.value;
+  });
+}
+
+// Car Speed Detector Integration
+let carDetector = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const carModeBtn = document.getElementById('carModeBtn');
+  const backToGameBtn = document.getElementById('backToGameBtn');
+  const carScreen = document.getElementById('carScreen');
+  const gameScreen = document.getElementById('gameScreen');
+
+  if (carModeBtn) {
+    carModeBtn.addEventListener('click', () => {
+      // Hide game screen
+      gameScreen.style.display = 'none';
+
+      // Show car screen
+      carScreen.style.display = 'block';
+
+      // Initialize detector if needed
+      if (!carDetector) {
+        carDetector = new CarSpeedDetector();
+      }
+
+      // Start detection
+      carDetector.start();
     });
   }
+
+  if (backToGameBtn) {
+    backToGameBtn.addEventListener('click', () => {
+      if (carDetector) {
+        carDetector.stop();
+      }
+      carScreen.style.display = 'none';
+      gameScreen.style.display = 'block';
+    });
+  }
+});

@@ -15,6 +15,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+  <!-- TensorFlow.js and Coco-SSD for Car Detection -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -71,7 +74,7 @@
       </div>
     <div class="controls">
       <div class="gesture-display">
-        <div class="theme-controls" style="margin-bottom: 10px; display: flex; gap: 5px;">
+        <div class="theme-controls" style="margin-bottom: 10px; display: flex; gap: 5px; flex-wrap: wrap;">
           <select id="themeSelect" class="quality-selector" style="width: auto;">
             <option value="theme-space">🌌 Space Theme</option>
             <option value="theme-nature">🌿 Nature Theme</option>
@@ -79,6 +82,7 @@
             <option value="theme-neon">🎆 Neon Theme</option>
           </select>
           <button id="settingsBtn" class="quality-selector" style="width: auto; cursor: pointer;">⚙️ Settings</button>
+          <button id="carModeBtn" class="quality-selector" style="width: auto; cursor: pointer; background: #ff4500; border-color: #ff4500;">🚗 Car Detector</button>
         </div>
         <h3>🤲 Current Gesture:</h3>
         <div id="gestureText">None</div>
@@ -129,6 +133,29 @@
       <p>• Collect power-ups for special abilities</p>
     </div>
     </div> <!-- Close game screen -->
+
+    <!-- Car Speed Detector Screen -->
+    <div id="carScreen" class="game-screen" style="display: none;">
+      <h1>🚗 Car Speed Detector</h1>
+      <div class="video-container">
+        <video id="carVideo" autoplay muted playsinline
+               width="1920" height="1080"
+               style="object-fit: cover; display: none;">
+        </video>
+        <canvas id="carCanvas"
+                width="1920" height="1080"
+                style="width: 100%; height: 100%; background: #000; border-radius: 15px;">
+        </canvas>
+      </div>
+      <div class="controls" style="justify-content: center;">
+        <div class="game-stats" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="score">🚘 Cars: <span id="carCount">0</span></div>
+          <div class="combo">⚡ Max Speed: <span id="maxSpeed">0</span> km/h</div>
+          <div class="timer">📍 Status: <span id="carStatus">Initializing...</span></div>
+        </div>
+        <button id="backToGameBtn" class="auth-btn" style="margin-top: 20px;">🔙 Back to Game</button>
+      </div>
+    </div>
   </div>
 
   <div id="gameOverModal" class="modal" style="display: none;">
@@ -182,6 +209,7 @@
   <script src="js/ai_manager.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/car_tracker.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
