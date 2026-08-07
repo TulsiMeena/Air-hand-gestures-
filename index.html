@@ -7,6 +7,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#764ba2">
+  <link rel="manifest" href="manifest.json">
   <title>Advanced Air Gesture Game</title>
   
   <!-- MediaPipe libraries -->
@@ -739,6 +741,7 @@
         </div>
         <button id="startAuthBtn" class="auth-btn">🚀 Start Face Authentication</button>
         <button id="voiceAuthBtn" class="auth-btn voice-auth-btn">🎤 Voice Lock - Say "System Unlock"</button>
+        <button class="auth-btn install-btn" style="display: none; background: rgba(0, 136, 255, 0.2); border-color: #0088ff; margin-top: 10px;">📱 Install App</button>
         </div>
       </div>
     </div>
@@ -778,6 +781,7 @@
         <button id="performanceBtn" class="performance-btn">⚡ High Performance</button>
         <button id="soundBtn" class="sound-btn">🔊 Sound On</button>
         <button id="voiceBtn" class="voice-btn">🎤 AI Voice On</button>
+        <button class="auth-btn install-btn" style="display: none; background: rgba(0, 136, 255, 0.2); border-color: #0088ff; padding: 12px 24px; font-size: 1rem;">📱 Install App</button>
       </div>
       <div class="actions">
         <div class="action-item" id="action1">👆 Point Up</div>
@@ -2872,6 +2876,48 @@ class AdvancedGestureGame {
     }, 10000);
   }
 }
+
+// PWA Setup and Install Logic
+let deferredPrompt;
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(registration => {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    }, err => {
+      console.log('ServiceWorker registration failed: ', err);
+    });
+  });
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent the mini-infobar from appearing on mobile
+  e.preventDefault();
+  // Stash the event so it can be triggered later.
+  deferredPrompt = e;
+  // Update UI notify the user they can install the PWA
+  const installBtns = document.querySelectorAll('.install-btn');
+  installBtns.forEach(btn => {
+    btn.style.display = 'inline-block';
+    btn.addEventListener('click', async () => {
+      // Show the install prompt
+      deferredPrompt.prompt();
+      // Wait for the user to respond to the prompt
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
+      // We've used the prompt, and can't use it again, throw it away
+      deferredPrompt = null;
+      // Hide buttons
+      installBtns.forEach(b => b.style.display = 'none');
+    });
+  });
+});
+
+window.addEventListener('appinstalled', (evt) => {
+  console.log('a2hs installed');
+  const installBtns = document.querySelectorAll('.install-btn');
+  installBtns.forEach(b => b.style.display = 'none');
+});
+
 
 document.addEventListener('DOMContentLoaded', () => {
   try {
